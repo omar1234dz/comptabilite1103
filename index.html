@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاسبتي الفردية</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Tahoma',Arial,sans-serif; }
+body { background:#f0f4f8; color:#2d3748; padding-bottom:70px; }
+
+header {
+  background:linear-gradient(135deg,#2b6cb0,#3182ce);
+  color:white; padding:16px; text-align:center;
+  position:sticky; top:0; z-index:100;
+  box-shadow:0 2px 10px rgba(0,0,0,0.15);
+}
+header h1 { font-size:20px; }
+header p { font-size:12px; opacity:0.9; margin-top:4px; }
+
+nav {
+  position:fixed; bottom:0; left:0; right:0;
+  background:white; display:flex; justify-content:space-around;
+  border-top:1px solid #e2e8f0; box-shadow:0 -2px 10px rgba(0,0,0,0.05);
+  z-index:100;
+}
+nav button {
+  flex:1; background:none; border:none; padding:10px 4px;
+  font-size:11px; color:#718096; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  transition:color 0.2s;
+}
+nav button.active { color:#2b6cb0; font-weight:bold; }
+nav button span { font-size:18px; }
+
+main { padding:14px; max-width:600px; margin:0 auto; }
+.tab { display:none; }
+.tab.active { display:block; }
+
+.card {
+  background:white; border-radius:12px; padding:16px;
+  margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.card h2 { font-size:16px; color:#2b6cb0; margin-bottom:12px; }
+
+input, select, textarea {
+  width:100%; padding:10px 12px; margin-bottom:10px;
+  border:2px solid #e2e8f0; border-radius:8px;
+  font-size:14px; background:#f7fafc; outline:none;
+}
+input:focus, select:focus { border-color:#3182ce; background:white; }
+
+.btn {
+  padding:10px 16px; border:none; border-radius:8px;
+  font-size:14px; font-weight:bold; cursor:pointer;
+  transition:0.2s; width:100%; margin-bottom:8px;
+}
+.btn-green { background:#38a169; color:white; }
+.btn-green:hover { background:#2f855a; }
+.btn-red { background:#fc8181; color:white; }
+.btn-red:hover { background:#f56565; }
+.btn-blue { background:#3182ce; color:white; }
+.btn-blue:hover { background:#2b6cb0; }
+
+.item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px; border-bottom:1px solid #edf2f7;
+  font-size:14px;
+}
+.item:last-child { border-bottom:none; }
+.item-name { font-weight:500; }
+.item-info { font-size:12px; color:#718096; }
+.item-amount { font-weight:bold; color:#38a169; }
+.item-amount.expense { color:#e53e3e; }
+.delete-btn {
+  background:#fed7d7; color:#c53030; border:none;
+  border-radius:6px; padding:4px 10px; font-size:12px;
+  cursor:pointer; margin-right:8px;
+}
+
+.total-box {
+  background:#2b6cb0; color:white; border-radius:10px;
+  padding:14px; display:flex; justify-content:space-between;
+  font-size:16px; font-weight:bold; margin-bottom:12px;
+}
+.total-box span:last-child { color:#fbd38d; }
+
+.stats-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+}
+.stat-card {
+  background:#f7fafc; border-radius:8px; padding:12px;
+  text-align:center; border:1px solid #e2e8f0;
+}
+.stat-value { font-size:20px; font-weight:bold; color:#2b6cb0; }
+.stat-label { font-size:11px; color:#718096; margin-top:4px; }
+
+.empty { text-align:center; color:#a0aec0; padding:20px; font-size:13px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💰 محاسبتي الفردية</h1>
+  <p>إدارة مصاريفك ومداخيلك بسهولة</p>
+</header>
+
+<main>
+
+<!-- تبويب 1: العمليات -->
+<div id="tab-trans" class="tab active">
+  <div class="total-box">
+    <span>💵 الرصيد الحالي</span>
+    <span id="balance">0.00</span>
+  </div>
+  <div class="card">
+    <h2>➕ إضافة عملية</h2>
+    <input type="text" id="transName" placeholder="الوصف (راتب، فاتورة، بيع...)">
+    <input type="number" id="transAmount" placeholder="المبلغ" min="0" step="0.01">
+    <select id="transType">
+      <option value="income">📈 مدخول</option>
+      <option value="expense">📉 مصروف</option>
+    </select>
+    <select id="transCategory">
+      <option value="عام">عام</option>
+      <option value="طعام">🍔 طعام</option>
+      <option value="مواصلات">🚗 مواصلات</option>
+      <option value="فواتير">🧾 فواتير</option>
+      <option value="صحة">💊 صحة</option>
+      <option value="تعليم">📚 تعليم</option>
+      <option value="ترفيه">🎬 ترفيه</option>
+      <option value="ادخار">🏦 ادخار</option>
+      <option value="ذهب">🥇 ذهب</option>
+      <option value="طوارئ">🚨 طوارئ</option>
+    </select>
+    <button class="btn btn-green" onclick="addTransaction()">➕ إضافة</button>
+  </div>
+  <div class="card">
+    <h2>📋 آخر العمليات</h2>
+    <div id="transList"></div>
+  </div>
+</div>
+
+<!-- تبويب 2: الإحصائيات -->
+<div id="tab-stats" class="tab">
+  <div class="card">
+    <h2>📊 ملخص عام</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="totalIncome">0</div>
+        <div class="stat-label">📈 إجمالي المداخيل</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalExpense">0</div>
+        <div class="stat-label">📉 إجمالي المصاريف</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>📂 حسب الفئة</h2>
+    <div id="categoryStats"></div>
+  </div>
+</div>
+
+<!-- تبويب 3: الأهداف -->
+<div id="tab-goals" class="tab">
+  <div class="card">
+    <h2>🎯 إضافة هدف</h2>
+    <input type="text" id="goalName" placeholder="اسم الهدف (شراء سيارة، سفر...)">
+    <input type="number" id="goalTarget" placeholder="المبلغ المستهدف" min="0">
+    <input type="number" id="goalSaved" placeholder="المبلغ المدخر حاليًا" min="0">
+    <button class="btn btn-blue" onclick="addGoal()">➕ إضافة هدف</button>
+  </div>
+  <div class="card">
+    <h2>📋 أهدافي</h2>
+    <div id="goalsList"></div>
+  </div>
+</div>
+
+</main>
+
+<nav>
+  <button class="active" onclick="switchTab('trans',this)">
+    <span>💸</span> العمليات
+  </button>
+  <button onclick="switchTab('stats',this)">
+    <span>📊</span> الإحصائيات
+  </button>
+  <button onclick="switchTab('goals',this)">
+    <span>🎯</span> الأهداف
+  </button>
+</nav>
+
+<script>
+const store = {
+  get: (key) => JSON.parse(localStorage.getItem(key) || '[]'),
+  set: (key, val) => localStorage.setItem(key, JSON.stringify(val))
+};
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (name === 'stats') renderStats();
+  if (name === 'goals') renderGoals();
+}
+
+function deleteItem(key, index, renderFn) {
+  const arr = store.get(key);
+  arr.splice(index, 1);
+  store.set(key, arr);
+  renderFn();
+}
+
+/* العمليات */
+function addTransaction() {
+  const name = document.getElementById('transName').value.trim();
+  const amount = parseFloat(document.getElementById('transAmount').value);
+  const type = document.getElementById('transType').value;
+  const category = document.getElementById('transCategory').value;
+
+  if (!name || isNaN(amount) || amount <= 0) { alert('يرجى إدخال وصف ومبلغ صحيح'); return; }
+
+  const trans = store.get('transactions');
+  trans.push({ name, amount, type, category, date: new Date().toLocaleDateString('ar-DZ') });
+  store.set('transactions', trans);
+  document.getElementById('transName').value = '';
+  document.getElementById('transAmount').value = '';
+  renderTrans();
+}
+
+function renderTrans() {
+  const trans = store.get('transactions');
+  const income = trans.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = trans.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  document.getElementById('balance').textContent = (income - expense).toFixed(2);
+
+  const list = document.getElementById('transList');
+  if (trans.length === 0) { list.innerHTML = '<div class="empty">📭 لا توجد عمليات</div>'; return; }
+
+  list.innerHTML = trans.slice().reverse().slice(0, 30).map((t, idx) => {
+    const realIndex = trans.length - 1 - idx;
+    return `
+      <div class="item">
+        <div>
+          <div class="item-name">${t.name}</div>
+          <div class="item-info">${t.category} • ${t.date}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="item-amount ${t.type === 'expense' ? 'expense' : ''}">
+            ${t.type === 'expense' ? '-' : '+'}${t.amount.toFixed(2)}
+          </span>
+          <button class="delete-btn" onclick="deleteItem('transactions',${realIndex},renderTrans)">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* الإحصائيات */
+function renderStats() {
+  const trans = store.get('transactions');
+  const income = trans.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const expense = trans.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+  document.getElementById('totalIncome').textContent = income.toFixed(0);
+  document.getElementById('totalExpense').textContent = expense.toFixed(0);
+
+  const categories = {};
+  trans.filter(t => t.type === 'expense').forEach(t => {
+    categories[t.category] = (categories[t.category] || 0) + t.amount;
+  });
+
+  const list = document.getElementById('categoryStats');
+  const entries = Object.entries(categories).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) { list.innerHTML = '<div class="empty">📭 لا توجد بيانات</div>'; return; }
+
+  list.innerHTML = entries.map(([cat, val]) => `
+    <div class="item">
+      <span class="item-name">${cat}</span>
+      <span class="item-amount expense">${val.toFixed(2)}</span>
+    </div>
+  `).join('');
+}
+
+/* الأهداف */
+function addGoal() {
+  const name = document.getElementById('goalName').value.trim();
+  const target = parseFloat(document.getElementById('goalTarget').value);
+  const saved = parseFloat(document.getElementById('goalSaved').value) || 0;
+
+  if (!name || isNaN(target) || target <= 0) { alert('يرجى إدخال اسم الهدف والمبلغ المستهدف'); return; }
+
+  const goals = store.get('goals');
+  goals.push({ name, target, saved });
+  store.set('goals', goals);
+  document.getElementById('goalName').value = '';
+  document.getElementById('goalTarget').value = '';
+  document.getElementById('goalSaved').value = '';
+  renderGoals();
+}
+
+function renderGoals() {
+  const goals = store.get('goals');
+  const list = document.getElementById('goalsList');
+  if (goals.length === 0) { list.innerHTML = '<div class="empty">📭 لا توجد أهداف</div>'; return; }
+
+  list.innerHTML = goals.map((g, i) => {
+    const percent = Math.min((g.saved / g.target) * 100, 100).toFixed(0);
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+          <span class="item-name">${g.name}</span>
+          <span style="color:#2b6cb0;font-weight:bold;">${percent}%</span>
+        </div>
+        <div style="background:#e2e8f0;border-radius:10px;height:14px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#3182ce,#63b3ed);height:100%;width:${percent}%;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#718096;margin-top:4px;">
+          <span>${g.saved.toFixed(0)} / ${g.target.toFixed(0)}</span>
+          <button class="delete-btn" onclick="deleteItem('goals',${i},renderGoals)">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+renderTrans();
+</script>
+
+</body>
+</html>
